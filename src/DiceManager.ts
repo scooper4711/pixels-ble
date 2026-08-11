@@ -96,7 +96,10 @@ export class DiceManager extends EventEmitter<DiceManagerEvents> {
 
     this.diceMap.delete(systemId);
     this.emit('dieRemoved', pixel);
-    await this.persistDice();
+
+    const existing = await this.storage.load();
+    const filtered = existing.filter((die) => die.systemId !== systemId);
+    await this.storage.save(filtered);
   }
 
   private wirePixelEvents(pixel: Pixel): void {
@@ -144,18 +147,21 @@ export class DiceManager extends EventEmitter<DiceManagerEvents> {
     if (isNew) {
       this.emit('dieAdded', pixel);
     }
-
-    await this.persistDice();
   }
 
   private async persistDice(): Promise<void> {
-    const knownDice: KnownDie[] = [...this.diceMap.values()].map((pixel) => ({
-      name: pixel.name,
-      systemId: pixel.systemId,
-      dieType: pixel.dieType,
-      lastConnected: Date.now(),
-    }));
+    const existing = await this.storage.load();
+    const merged = new Map(existing.map((die) => [die.systemId, die]));
 
-    await this.storage.save(knownDice);
+    for (const pixel of this.diceMap.values()) {
+      merged.set(pixel.systemId, {
+        name: pixel.name,
+        systemId: pixel.systemId,
+        dieType: pixel.dieType,
+        lastConnected: Date.now(),
+      });
+    }
+
+    await this.storage.save([...merged.values()]);
   }
 }
