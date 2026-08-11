@@ -13,7 +13,10 @@ export function startMonitoring(pixel: Pixel): void {
   const listener: StatusListener = ({ connected }) => {
     if (!connected && pixel.device.gatt) {
       setTimeout(() => {
-        attemptReconnection(pixel.device, pixel);
+        attemptReconnection(pixel.device, pixel).catch(() => {
+          // Silently ignore — reconnection failures after sleep/wake are expected.
+          // The user will be guided to refresh via the BluetoothStale notification.
+        });
       }, RECONNECT_DEBOUNCE_MS);
     }
   };
