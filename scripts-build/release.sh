@@ -100,57 +100,86 @@ NEXT_VERSION="${NEXT_TAG#v}"
 TODAY=$(date +%Y-%m-%d)
 REPO_URL=$(git remote get-url origin | sed 's/.*github.com[:/]\(.*\)\.git/\1/' | sed 's/.*github.com[:/]\(.*\)$/\1/')
 
-# Build changelog entry from conventional commits
-CHANGELOG_ENTRY="## [${NEXT_VERSION}] - ${TODAY}"
-ADDED=""
-FIXED=""
-CHANGED=""
+# Build changelog entry in a temp file
+ENTRY_FILE=$(mktemp)
+{
+  echo "## [${NEXT_VERSION}] - ${TODAY}"
+  echo ""
 
-if [[ -n "$LATEST_TAG" ]]; then
-  while IFS= read -r subject; do
-    if echo "$subject" | grep -qE '^feat(\(.+\))?:'; then
-      MSG=$(echo "$subject" | sed 's/^feat\([^)]*\)\?: //')
-      ADDED="${ADDED}\n- ${MSG}"
-    elif echo "$subject" | grep -qE '^fix(\(.+\))?:'; then
-      MSG=$(echo "$subject" | sed 's/^fix\([^)]*\)\?: //')
-      FIXED="${FIXED}\n- ${MSG}"
-    elif echo "$subject" | grep -qE '^refactor(\(.+\))?:|^chore(\(.+\))?:|^docs(\(.+\))?:'; then
-      MSG=$(echo "$subject" | sed 's/^[a-z]*\([^)]*\)\?: //')
-      CHANGED="${CHANGED}\n- ${MSG}"
-    fi
-  done <<< "$COMMITS_SINCE"
-else
-  ADDED="\n- Initial release"
-fi
+  # Categorize commits
+  ADDED_FILE=$(mktemp)
+  FIXED_FILE=$(mktemp)
+  CHANGED_FILE=$(mktemp)
 
-if [[ -n "$ADDED" ]]; then
-  CHANGELOG_ENTRY="${CHANGELOG_ENTRY}\n\n### Added${ADDED}"
-fi
-if [[ -n "$FIXED" ]]; then
-  CHANGELOG_ENTRY="${CHANGELOG_ENTRY}\n\n### Fixed${FIXED}"
-fi
-if [[ -n "$CHANGED" ]]; then
-  CHANGELOG_ENTRY="${CHANGELOG_ENTRY}\n\n### Changed${CHANGED}"
-fi
+  if [[ -n "$LATEST_TAG" ]]; then
+    while IFS= read -r subject; do
+      if echo "$subject" | grep -qE '^feat(\(.+\))?:'; then
+        echo "$subject" | sed -E 's/^feat(\([^)]*\))?: /- /' >> "$ADDED_FILE"
+      elif echo "$subject" | grep -qE '^fix(\(.+\))?:'; then
+        echo "$subject" | sed -E 's/^fix(\([^)]*\))?: /- /' >> "$FIXED_FILE"
+      elif echo "$subject" | grep -qE '^refactor(\(.+\))?:|^chore(\(.+\))?:|^docs(\(.+\))?:'; then
+        echo "$subject" | sed -E 's/^[a-z]+(\([^)]*\))?: /- /' >> "$CHANGED_FILE"
+      fi
+    done <<< "$COMMITS_SINCE"
+  else
+    echo "- Initial release" >> "$ADDED_FILE"
+  fi
 
-CHANGELOG_ENTRY="${CHANGELOG_ENTRY}\n\n[${NEXT_VERSION}]: https://github.com/${REPO_URL}/releases/tag/${NEXT_TAG}"
+  if [[ -s "$ADDED_FILE" ]]; then
+    echo "### Added"
+    cat "$ADDED_FILE"
+    echo ""
+  fi
+  if [[ -s "$FIXED_FILE" ]]; then
+    echo "### Fixed"
+    cat "$FIXED_FILE"
+    echo ""
+  fi
+  if [[ -s "$CHANGED_FILE" ]]; then
+    echo "### Changed"
+    cat "$CHANGED_FILE"
+    echo ""
+  fi
 
-# Insert the new entry after the changelog header
+  echo "[${NEXT_VERSION}]: https://github.com/${REPO_URL}/releases/tag/${NEXT_TAG}"
+
+  rm -f "$ADDED_FILE" "$FIXED_FILE" "$CHANGED_FILE"
+} > "$ENTRY_FILE"
+
+# Insert the new entry before the first existing "## [" heading
 if [[ -f CHANGELOG.md ]]; then
-  # Insert after the first "## [" line's preceding blank line, or after the header block
   TEMP_FILE=$(mktemp)
-  awk -v entry="$(echo -e "$CHANGELOG_ENTRY")" '
-    /^## \[/ && !inserted {
-      print entry
-      print ""
-      inserted=1
-    }
-    { print }
-  ' CHANGELOG.md > "$TEMP_FILE"
+  INSERTED=false
+  while IFS= read -r line; do
+    if [[ "$INSERTED" == false ]] && echo "$line" | grep -q '^## \['; then
+      cat "$ENTRY_FILE"
+      echo ""
+      INSERTED=true
+    fi
+    echo "$line"
+  done < CHANGELOG.md > "$TEMP_FILE"
+
+  # If no existing ## [ heading was found, append at the end
+  if [[ "$INSERTED" == false ]]; then
+    echo "" >> "$TEMP_FILE"
+    cat "$ENTRY_FILE" >> "$TEMP_FILE"
+  fi
+
   mv "$TEMP_FILE" CHANGELOG.md
 else
-  echo -e "# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n${CHANGELOG_ENTRY}" > CHANGELOG.md
+  {
+    echo "# Changelog"
+    echo ""
+    echo "All notable changes to this project will be documented in this file."
+    echo ""
+    echo "The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),"
+    echo "and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)."
+    echo ""
+    cat "$ENTRY_FILE"
+  } > CHANGELOG.md
 fi
+
+rm -f "$ENTRY_FILE"
 
 # Commit the changelog update
 git add CHANGELOG.md
