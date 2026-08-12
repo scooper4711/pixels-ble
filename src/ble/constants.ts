@@ -12,11 +12,13 @@ export const PIXELS_LEGACY_WRITE_CHARACTERISTIC = '6e400002-b5a3-f393-e0a9-e50e2
 export const MESSAGE_TYPE_I_AM_A_DIE = 2;
 export const MESSAGE_TYPE_ROLL_STATE = 3;
 export const MESSAGE_TYPE_BATTERY_LEVEL = 34;
+export const MESSAGE_TYPE_RSSI = 36;
 
 // Outgoing message types (commands to die)
 export const MESSAGE_TYPE_WHO_ARE_YOU = 1;
 export const MESSAGE_TYPE_REQUEST_BATTERY_LEVEL = 33;
 export const MESSAGE_TYPE_BLINK = 29;
+export const MESSAGE_TYPE_REQUEST_RSSI = 35;
 
 // Blink constants
 export const FACE_MASK_ALL = 0xffffffff;

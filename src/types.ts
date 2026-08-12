@@ -3,6 +3,7 @@ export interface PixelEvents {
   roll: { face: number; dieType: number };
   status: { connected: boolean };
   battery: { level: number };
+  rssi: { rssi: number };
 }
 
 /** Known die type values (face count) */
@@ -28,6 +29,7 @@ export interface PixelInfo {
   readonly systemId: string;
   readonly dieType: number | null;
   readonly batteryLevel: number | null;
+  readonly rssi: number | null;
   readonly isConnected: boolean;
 }
 

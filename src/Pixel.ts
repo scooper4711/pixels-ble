@@ -15,6 +15,7 @@ import {
   serializeWhoAreYou,
   serializeBlink,
   serializeRequestBatteryLevel,
+  serializeRequestRssi,
 } from './ble/protocol.js';
 
 const SERVICE_PAIRS = [
@@ -48,6 +49,7 @@ export class Pixel extends EventEmitter<PixelEvents> {
 
   dieType: number | null;
   batteryLevel: number | null = null;
+  rssi: number | null = null;
   isConnected = false;
 
   private readonly _device: BluetoothDevice;
@@ -135,6 +137,17 @@ export class Pixel extends EventEmitter<PixelEvents> {
 
     const colorInt = (color.r << 16) | (color.g << 8) | color.b;
     const data = serializeBlink(colorInt, 1, 1000);
+    await this.writeCharacteristic.writeValueWithoutResponse(
+      toArrayBuffer(data),
+    );
+  }
+
+  async reportRssi(enabled: boolean, intervalMs = 5000): Promise<void> {
+    if (!this.writeCharacteristic) {
+      throw new Error('Not connected — cannot send RSSI request');
+    }
+
+    const data = serializeRequestRssi(enabled, intervalMs);
     await this.writeCharacteristic.writeValueWithoutResponse(
       toArrayBuffer(data),
     );
@@ -242,6 +255,11 @@ export class Pixel extends EventEmitter<PixelEvents> {
       case 'batteryLevel':
         this.batteryLevel = message.level;
         this.emit('battery', { level: message.level });
+        break;
+
+      case 'rssi':
+        this.rssi = message.rssi;
+        this.emit('rssi', { rssi: message.rssi });
         break;
     }
   }

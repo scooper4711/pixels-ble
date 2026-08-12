@@ -5,7 +5,9 @@ import {
   MESSAGE_TYPE_BLINK,
   MESSAGE_TYPE_I_AM_A_DIE,
   MESSAGE_TYPE_REQUEST_BATTERY_LEVEL,
+  MESSAGE_TYPE_REQUEST_RSSI,
   MESSAGE_TYPE_ROLL_STATE,
+  MESSAGE_TYPE_RSSI,
   MESSAGE_TYPE_WHO_ARE_YOU,
 } from './constants.js';
 
@@ -15,6 +17,7 @@ export type ParsedMessage =
   | { type: 'iAmADie'; dieType: number; batteryLevel: number | null }
   | { type: 'rollState'; event: number; faceIndex: number }
   | { type: 'batteryLevel'; level: number }
+  | { type: 'rssi'; rssi: number }
   | { type: 'unknown'; messageType: number };
 
 // --- Parsing (incoming notifications from die) ---
@@ -43,6 +46,11 @@ export function parseBatteryLevel(data: DataView): { level: number } {
   return { level };
 }
 
+export function parseRssi(data: DataView): { rssi: number } {
+  const rssi = data.getInt8(1);
+  return { rssi };
+}
+
 export function parseMessage(data: DataView): ParsedMessage {
   const messageType = data.getUint8(0);
 
@@ -58,6 +66,10 @@ export function parseMessage(data: DataView): ParsedMessage {
     case MESSAGE_TYPE_BATTERY_LEVEL: {
       const { level } = parseBatteryLevel(data);
       return { type: 'batteryLevel', level };
+    }
+    case MESSAGE_TYPE_RSSI: {
+      const { rssi } = parseRssi(data);
+      return { type: 'rssi', rssi };
     }
     default:
       return { type: 'unknown', messageType };
@@ -101,6 +113,20 @@ export function serializeBlink(
   view.setUint32(8, FACE_MASK_ALL, true);
   view.setUint8(12, 128); // fade
   view.setUint8(13, 1); // loopCount
+
+  return new Uint8Array(buffer);
+}
+
+export function serializeRequestRssi(
+  enabled: boolean,
+  intervalMs: number,
+): Uint8Array {
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+
+  view.setUint8(0, MESSAGE_TYPE_REQUEST_RSSI);
+  view.setUint8(1, enabled ? 2 : 0); // 0 = off, 2 = repeat
+  view.setUint16(2, intervalMs, true);
 
   return new Uint8Array(buffer);
 }
