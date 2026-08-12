@@ -190,6 +190,15 @@ git tag -a "$NEXT_TAG" -m "Release ${NEXT_TAG}"
 git push origin main
 git push origin "$NEXT_TAG"
 
+# Extract the release notes (everything between this version's heading and the next)
+RELEASE_NOTES=$(sed -n "/^## \[${NEXT_VERSION}\]/,/^## \[/{/^## \[${NEXT_VERSION}\]/d;/^## \[/d;p;}" CHANGELOG.md)
+
+# Create a draft GitHub Release using the changelog entry
+RELEASE_URL=$(gh release create "$NEXT_TAG" \
+  --draft \
+  --title "$NEXT_TAG" \
+  --notes "$RELEASE_NOTES")
+
 echo ""
-echo "Tag $NEXT_TAG pushed. The release workflow will publish to NPM."
-echo "Create a GitHub Release at: https://github.com/${REPO_URL}/releases/new?tag=${NEXT_TAG}"
+echo "Tag $NEXT_TAG pushed. Draft release created."
+echo "Review and publish: $RELEASE_URL"

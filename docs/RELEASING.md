@@ -35,16 +35,12 @@ The script will:
 5. Commit the changelog
 6. Create an annotated tag
 7. Push main and the tag to origin
+8. Create a draft GitHub Release using the changelog entry
+9. Print the URL to review and publish the draft
 
-### 2. Create the GitHub Release
+### 2. Publish the Release
 
-The script prints the URL. You can also use the CLI:
-
-```bash
-gh release create v0.2.0 \
-  --title "v0.2.0" \
-  --notes "See [CHANGELOG.md](./CHANGELOG.md#020---2025-08-15) for details."
-```
+Open the draft release URL printed by the script. Review the notes, then click "Publish release." This triggers the `release.yml` workflow which builds and publishes to NPM.
 
 ### 4. Verify the Publish
 
