@@ -183,4 +183,35 @@ describe('DiceManager integration', () => {
       expect(mockDevice.watchAdvertisements).not.toHaveBeenCalled();
     });
   });
+
+  describe('persistDice deduplication', () => {
+    it('deduplicates by name when device ID changes', async () => {
+      // First connection with original device ID
+      await manager.requestPixel();
+      expect(storage.save).toHaveBeenCalled();
+
+      const firstSave = (storage.save as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(firstSave).toHaveLength(1);
+      expect(firstSave[0].systemId).toBe('device-abc-123');
+      expect(firstSave[0].name).toBe('Pixel D20');
+
+      // Simulate storage having the old entry
+      (storage.load as ReturnType<typeof vi.fn>).mockResolvedValue([
+        { name: 'Pixel D20', systemId: 'old-device-id', dieType: 20, lastConnected: 1000 },
+      ]);
+
+      // New device with different ID but same name
+      const newDevice = createMockDevice('new-device-id-456', 'Pixel D20');
+      stubNavigatorBluetooth(newDevice);
+
+      const manager2 = new DiceManager(storage);
+      await manager2.requestPixel();
+
+      const lastSave = (storage.save as ReturnType<typeof vi.fn>).mock.lastCall![0];
+      // Should only have one entry (deduplicated), not two
+      const pixelD20Entries = lastSave.filter((d: { name: string }) => d.name === 'Pixel D20');
+      expect(pixelD20Entries).toHaveLength(1);
+      expect(pixelD20Entries[0].systemId).toBe('new-device-id-456');
+    });
+  });
 });

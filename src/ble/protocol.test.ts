@@ -5,8 +5,10 @@ import {
   parseIAmADie,
   parseMessage,
   parseRollState,
+  parseRssi,
   serializeBlink,
   serializeRequestBatteryLevel,
+  serializeRequestRssi,
   serializeWhoAreYou,
 } from './protocol.js';
 
@@ -198,5 +200,73 @@ describe('serializeBlink', () => {
     const result = serializeBlink(0x000000ff, 1, duration);
     const view = new DataView(result.buffer);
     expect(view.getUint16(2, true)).toBe(duration);
+  });
+});
+
+describe('parseRssi', () => {
+  it('extracts positive RSSI from byte 1', () => {
+    const data = makeDataView([36, 0]);
+    const result = parseRssi(data);
+    expect(result.rssi).toBe(0);
+  });
+
+  it('extracts negative RSSI as signed int8', () => {
+    // -60 as uint8 = 196
+    const data = makeDataView([36, 196]);
+    const result = parseRssi(data);
+    expect(result.rssi).toBe(-60);
+  });
+
+  it('handles -85 dBm correctly', () => {
+    // -85 as uint8 = 171
+    const data = makeDataView([36, 171]);
+    const result = parseRssi(data);
+    expect(result.rssi).toBe(-85);
+  });
+});
+
+describe('parseMessage — RSSI', () => {
+  it('routes message type 36 to rssi', () => {
+    // -72 as uint8 = 184
+    const data = makeDataView([36, 184]);
+    const result = parseMessage(data);
+    expect(result.type).toBe('rssi');
+    if (result.type === 'rssi') {
+      expect(result.rssi).toBe(-72);
+    }
+  });
+});
+
+describe('serializeRequestRssi', () => {
+  it('returns 4 bytes', () => {
+    const result = serializeRequestRssi(true, 5000);
+    expect(result.length).toBe(4);
+  });
+
+  it('byte 0 is MESSAGE_TYPE_REQUEST_RSSI (35)', () => {
+    const result = serializeRequestRssi(true, 5000);
+    expect(result[0]).toBe(35);
+  });
+
+  it('byte 1 is 2 (repeat) when enabled', () => {
+    const result = serializeRequestRssi(true, 5000);
+    expect(result[1]).toBe(2);
+  });
+
+  it('byte 1 is 0 (off) when disabled', () => {
+    const result = serializeRequestRssi(false, 0);
+    expect(result[1]).toBe(0);
+  });
+
+  it('interval is little-endian at bytes 2-3', () => {
+    const result = serializeRequestRssi(true, 5000);
+    const view = new DataView(result.buffer);
+    expect(view.getUint16(2, true)).toBe(5000);
+  });
+
+  it('handles max uint16 interval', () => {
+    const result = serializeRequestRssi(true, 65535);
+    const view = new DataView(result.buffer);
+    expect(view.getUint16(2, true)).toBe(65535);
   });
 });
