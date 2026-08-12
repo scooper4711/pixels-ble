@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-08-12
+
+### Added
+- Add signed tags, artifact attestation, and initial setup docs
+- Switch to staged publishing with OIDC trusted publishing
+- Create draft GitHub Release with changelog notes in release script
+
+### Fixed
+- Improve release sync check with directional error messages
+- Abort release if local main is behind origin
+
+### Changed
+- Add security policy for vulnerability disclosure
+- Add acknowledgements section to README
+- Bump actions/download-artifact from 4 to 8
+- Bump actions/checkout from 4 to 7
+- Bump actions/setup-node from 4 to 7
+- Bump actions/upload-artifact from 4 to 7
+- Bump SonarSource/sonarqube-scan-action
+- Add CI/CD workflows, SonarCloud, and Dependabot configuration
+
+[0.2.0]: https://github.com/scooper4711/pixels-ble/releases/tag/v0.2.0
+
 ## [0.1.2] - 2026-08-12
 
 ### Fixed
