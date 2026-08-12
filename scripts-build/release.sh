@@ -18,6 +18,18 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   exit 1
 fi
 
+# Abort if local main is not up to date with remote
+git fetch origin main --quiet
+LOCAL=$(git rev-parse HEAD)
+REMOTE=$(git rev-parse origin/main)
+if [[ "$LOCAL" != "$REMOTE" ]]; then
+  echo "Error: Local main is not up to date with origin/main."
+  echo "  Local:  $LOCAL"
+  echo "  Remote: $REMOTE"
+  echo "Run 'git pull' before releasing."
+  exit 1
+fi
+
 FORCE_BUMP=""
 
 for arg in "$@"; do
