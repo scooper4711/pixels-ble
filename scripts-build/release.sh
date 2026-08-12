@@ -18,15 +18,22 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   exit 1
 fi
 
-# Abort if local main is not up to date with remote
+# Abort if local main is not in sync with remote
 git fetch origin main --quiet
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse origin/main)
 if [[ "$LOCAL" != "$REMOTE" ]]; then
-  echo "Error: Local main is not up to date with origin/main."
-  echo "  Local:  $LOCAL"
-  echo "  Remote: $REMOTE"
-  echo "Run 'git pull' before releasing."
+  BASE=$(git merge-base "$LOCAL" "$REMOTE" 2>/dev/null || echo "")
+  if [[ "$BASE" == "$REMOTE" ]]; then
+    echo "Error: Local main is ahead of origin/main (unpushed commits)."
+    echo "Run 'git push' before releasing."
+  elif [[ "$BASE" == "$LOCAL" ]]; then
+    echo "Error: Local main is behind origin/main."
+    echo "Run 'git pull --rebase' before releasing."
+  else
+    echo "Error: Local main has diverged from origin/main."
+    echo "Run 'git pull --rebase && git push' before releasing."
+  fi
   exit 1
 fi
 
