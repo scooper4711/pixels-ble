@@ -4,12 +4,11 @@ This document describes how to cut a release of `@scooper4711/pixels-ble` and pu
 
 ## Overview
 
-Releases are automated via GitHub Actions. The workflow is:
+Releases are automated via a release script and GitHub Actions:
 
-1. You create a GitHub Release with a semver tag.
-2. The `release.yml` workflow triggers, builds the package, and publishes to NPM with provenance attestation.
-
-There is no manual `npm publish` step.
+1. Run `./scripts-build/release.sh` to determine the version, update the changelog, tag, and push.
+2. Create a GitHub Release for the tag (the script prints the URL).
+3. The `release.yml` workflow triggers, builds the package, and publishes to NPM with provenance attestation.
 
 ## Prerequisites
 
@@ -19,68 +18,33 @@ There is no manual `npm publish` step.
 
 ## Step-by-Step
 
-### 1. Determine the Next Version
-
-Review commits since the last release to determine the appropriate semver bump:
+### 1. Run the Release Script
 
 ```bash
-# See commits since last tag
-git log $(git describe --tags --abbrev=0)..HEAD --oneline
+./scripts-build/release.sh           # auto-detect bump from commits
+./scripts-build/release.sh patch     # force patch bump
+./scripts-build/release.sh minor     # force minor bump
+./scripts-build/release.sh major     # force major bump
 ```
 
-| Commit type | Version bump |
-|-------------|-------------|
-| `fix:` | Patch (0.1.0 → 0.1.1) |
-| `feat:` | Minor (0.1.0 → 0.2.0) |
-| `feat!:`, `fix!:`, or `BREAKING CHANGE` in body | Major (0.1.0 → 1.0.0) |
+The script will:
+1. Analyze commits since the last tag to determine the semver bump
+2. Show the commits and proposed version
+3. Ask for confirmation
+4. Update `CHANGELOG.md` with a generated entry
+5. Commit the changelog
+6. Create an annotated tag
+7. Push main and the tag to origin
 
-### 2. Update the Changelog
+### 2. Create the GitHub Release
 
-Add a new section to `CHANGELOG.md` above the previous release:
-
-```markdown
-## [0.2.0] - 2025-08-15
-
-### Added
-- Description of new features
-
-### Fixed
-- Description of bug fixes
-
-### Changed
-- Description of changes
-
-[0.2.0]: https://github.com/scooper4711/pixels-ble/releases/tag/v0.2.0
-```
-
-Commit the changelog update:
-
-```bash
-git add CHANGELOG.md
-git commit -S -m "docs: Update CHANGELOG for v0.2.0"
-git push
-```
-
-### 3. Create the GitHub Release
-
-You can do this via the GitHub UI or the CLI:
-
-**Using the GitHub CLI:**
+The script prints the URL. You can also use the CLI:
 
 ```bash
 gh release create v0.2.0 \
   --title "v0.2.0" \
   --notes "See [CHANGELOG.md](./CHANGELOG.md#020---2025-08-15) for details."
 ```
-
-**Using the GitHub UI:**
-
-1. Go to the repository → Releases → "Draft a new release"
-2. Tag: `v0.2.0` (create new tag on publish)
-3. Target: `main`
-4. Title: `v0.2.0`
-5. Description: summarize changes or link to the changelog
-6. Click "Publish release"
 
 ### 4. Verify the Publish
 
