@@ -122,7 +122,9 @@ export class DiceManager extends EventEmitter<DiceManagerEvents> {
     const onAdvertisement = (): void => {
       controller.abort();
       device.removeEventListener('advertisementreceived', onAdvertisement);
-      this.connectDevice(device);
+      this.connectDevice(device).catch(() => {
+        // Connection failed after advertisement — die may have gone back to sleep
+      });
     };
 
     device.addEventListener('advertisementreceived', onAdvertisement);
