@@ -240,6 +240,12 @@ npm run lint
 
 All PRs must pass CI (lint, test, build) before merge.
 
+## Acknowledgements
+
+This library was inspired by and derived from the BLE communication code in the [Pixels Roll20 Chrome Extension](https://github.com/GameWithPixels/PixelsRoll20ChromeExtension), originally created by Olivier Basille and the [GameWithPixels](https://github.com/GameWithPixels) team, and further developed by [jbmowgli](https://github.com/jbmowgli/pixels-roll20-extension). The protocol constants, message parsing approach, and characteristic discovery pattern trace their lineage to those projects.
+
+Thanks to the Pixels team at [Systemic Games](https://gamewithpixels.com/) for designing dice with an open BLE protocol and publishing reference implementations across multiple platforms.
+
 ## License
 
 [MIT](./LICENSE) — Copyright (c) 2025 scooper4711
