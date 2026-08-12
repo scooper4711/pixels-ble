@@ -7,14 +7,16 @@ This document describes how to cut a release of `@scooper4711/pixels-ble` and pu
 Releases are automated via a release script and GitHub Actions:
 
 1. Run `./scripts-build/release.sh` to determine the version, update the changelog, tag, and push.
-2. Create a GitHub Release for the tag (the script prints the URL).
-3. The `release.yml` workflow triggers, builds the package, and publishes to NPM with provenance attestation.
+2. The script creates a draft GitHub Release with the changelog entry.
+3. You review and publish the draft.
+4. The `release.yml` workflow triggers, builds the package, and stages it on NPM with provenance attestation (via OIDC trusted publishing).
+5. You approve the staged package with 2FA.
 
 ## Prerequisites
 
 - Push access to the `main` branch.
-- The `NPM_TOKEN` secret is configured in the GitHub repository's `npm` environment (Settings → Environments → `npm` → Secrets).
-- The token must have publish permissions for the `@scooper4711` scope on npmjs.com.
+- OIDC trusted publishing configured on npmjs.com for the `@scooper4711/pixels-ble` package (repository: `scooper4711/pixels-ble`, workflow: `release.yml`, environment: `npm`).
+- 2FA enabled on your npmjs.com account (required to approve staged packages).
 
 ## Step-by-Step
 
@@ -40,24 +42,30 @@ The script will:
 
 ### 2. Publish the Release
 
-Open the draft release URL printed by the script. Review the notes, then click "Publish release." This triggers the `release.yml` workflow which builds and publishes to NPM.
+Open the draft release URL printed by the script. Review the notes, then click "Publish release." This triggers the `release.yml` workflow which builds and stages the package on NPM.
 
-### 4. Verify the Publish
+### 3. Approve the Staged Package
 
-Once the release is published, the `release.yml` workflow will:
+After CI completes, the package is in NPM's staging queue — not yet publicly installable. Approve it with 2FA:
 
-1. Check out the code at the tag
-2. Run type checking, tests, and build
-3. Set the package version from the tag (strips the `v` prefix)
-4. Publish to NPM with `--provenance --access public`
+**Using the CLI:**
 
-Monitor the workflow at: `https://github.com/scooper4711/pixels-ble/actions/workflows/release.yml`
+```bash
+npm stage list @scooper4711/pixels-ble
+npm stage approve <stage-id>
+```
 
-Verify on NPM: `https://www.npmjs.com/package/@scooper4711/pixels-ble`
+**Using npmjs.com:**
 
-### 5. Post-Release
+Go to your [Staged Packages](https://www.npmjs.com/settings/scooper4711/staged-packages) tab, review, and click "Approve."
 
-No additional steps required. The tag and GitHub Release serve as the version record. The published package includes provenance attestation, allowing consumers to verify the build origin.
+Once approved, the version becomes publicly available on the registry.
+
+### 4. Verify
+
+Monitor the workflow: `https://github.com/scooper4711/pixels-ble/actions/workflows/release.yml`
+
+Verify on NPM after approval: `https://www.npmjs.com/package/@scooper4711/pixels-ble`
 
 ## Version Policy
 
@@ -67,11 +75,11 @@ No additional steps required. The tag and GitHub Release serve as the version re
 
 ## Troubleshooting
 
-### Workflow fails at "Publish to NPM"
+### Workflow fails at "Stage publish to NPM"
 
-- Verify the `NPM_TOKEN` secret exists in the `npm` environment.
-- Verify the token has not expired (NPM tokens can be set to expire).
-- Verify the token has publish permissions for `@scooper4711/pixels-ble`.
+- Verify OIDC trusted publishing is configured on npmjs.com for the correct repository, workflow filename, and environment.
+- Ensure the `npm` environment exists in GitHub repo settings (Settings → Environments).
+- Check that `id-token: write` permission is set in the workflow.
 
 ### Version conflict (package already exists)
 
