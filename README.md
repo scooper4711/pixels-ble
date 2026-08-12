@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/scooper4711/pixels-ble/actions/workflows/ci.yml/badge.svg)](https://github.com/scooper4711/pixels-ble/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/@scooper4711/pixels-ble)](https://www.npmjs.com/package/@scooper4711/pixels-ble)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=scooper4711_pixels-ble&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=scooper4711_pixels-ble)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=scooper4711_pixels-ble&metric=coverage)](https://sonarcloud.io/summary/new_code?id=scooper4711_pixels-ble)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 A TypeScript library for communicating with [Pixels](https://gamewithpixels.com/) electronic dice over Bluetooth Low Energy (Web Bluetooth API).
