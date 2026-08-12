@@ -148,22 +148,33 @@ export class DiceManager extends EventEmitter<DiceManagerEvents> {
 
     if (isNew) {
       this.emit('dieAdded', pixel);
+      await this.persistDice();
     }
   }
 
   private async persistDice(): Promise<void> {
     const existing = await this.storage.load();
-    const merged = new Map(existing.map((die) => [die.systemId, die]));
+    const mergedById = new Map(existing.map((die) => [die.systemId, die]));
+    const mergedByName = new Map(existing.map((die) => [die.name, die]));
 
     for (const pixel of this.diceMap.values()) {
-      merged.set(pixel.systemId, {
+      const entry = {
         name: pixel.name,
         systemId: pixel.systemId,
         dieType: pixel.dieType,
         lastConnected: Date.now(),
-      });
+      };
+
+      // Remove stale entry if the same name exists with a different systemId
+      const existingByName = mergedByName.get(pixel.name);
+      if (existingByName && existingByName.systemId !== pixel.systemId) {
+        mergedById.delete(existingByName.systemId);
+      }
+
+      mergedById.set(pixel.systemId, entry);
+      mergedByName.set(pixel.name, entry);
     }
 
-    await this.storage.save([...merged.values()]);
+    await this.storage.save([...mergedById.values()]);
   }
 }
