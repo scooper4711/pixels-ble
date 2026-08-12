@@ -4,6 +4,7 @@ import {
   MESSAGE_TYPE_I_AM_A_DIE,
   MESSAGE_TYPE_ROLL_STATE,
   MESSAGE_TYPE_BATTERY_LEVEL,
+  MESSAGE_TYPE_RSSI,
   ROLL_EVENT_SETTLED,
   DIE_TYPE_FACES,
 } from './ble/constants.js';
@@ -288,6 +289,55 @@ describe('Pixel blink', () => {
     await expect(pixel.blink({ r: 255, g: 0, b: 0 })).rejects.toThrow(
       'Not connected',
     );
+  });
+});
+
+// --- reportRssi error ---
+
+describe('Pixel reportRssi', () => {
+  it('throws Not connected error when not connected', async () => {
+    const device = createMinimalDevice();
+    const pixel = new Pixel(device);
+
+    await expect(pixel.reportRssi(true, 5000)).rejects.toThrow(
+      'Not connected',
+    );
+  });
+});
+
+// --- RSSI notification ---
+
+describe('Pixel RSSI notification', () => {
+  it('updates rssi property and emits rssi event', () => {
+    const device = createMinimalDevice();
+    const pixel = new Pixel(device);
+    const handler = getHandleNotification(pixel);
+    const rssiListener = vi.fn();
+    pixel.addEventListener('rssi', rssiListener);
+
+    // RSSI message: type=36, value=-72 (as uint8 = 184)
+    handler(createNotificationEvent([MESSAGE_TYPE_RSSI, 184]));
+
+    expect(pixel.rssi).toBe(-72);
+    expect(rssiListener).toHaveBeenCalledWith({ rssi: -72 });
+  });
+
+  it('rssi starts as null', () => {
+    const device = createMinimalDevice();
+    const pixel = new Pixel(device);
+
+    expect(pixel.rssi).toBeNull();
+  });
+});
+
+// --- connect error ---
+
+describe('Pixel connect', () => {
+  it('throws when device has no GATT', async () => {
+    const device = createMinimalDevice();
+    const pixel = new Pixel(device);
+
+    await expect(pixel.connect()).rejects.toThrow('Device does not support GATT');
   });
 });
 
