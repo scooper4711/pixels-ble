@@ -19,7 +19,8 @@
   "scripts": {
     "build": "tsup && tsc --emitDeclarationOnly",
     "test": "vitest --run",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepare": "husky"
   },
   "keywords": [
     "pixels",
@@ -30,9 +31,14 @@
   ],
   "author": "scooper4711",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scooper4711/pixels-ble.git"
+  },
   "devDependencies": {
     "@types/web-bluetooth": "^0.0.21",
     "@vitest/coverage-v8": "^4.1.10",
+    "husky": "^9.1.7",
     "tsup": "^8.5.1",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"

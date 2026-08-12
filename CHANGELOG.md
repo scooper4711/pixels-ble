@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-08-12
+
+### Fixed
+- Use sed -E for macOS-compatible regex in release script
+- Suppress unhandled reconnection promise rejections
+
+### Changed
+- Add repository field for npm trusted publishing
+- Add release script and pre-commit hook (lint + test)
+- Add CI/CD workflows, SonarCloud, and Dependabot configuration
+- Add README, architecture, design, coding standards, and release guide
+
+[0.1.2]: https://github.com/scooper4711/pixels-ble/releases/tag/v0.1.2
+
 ## [0.1.0] - 2025-08-12
 
 ### Added
