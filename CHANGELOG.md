@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-12
+
+### Added
+- Add RSSI signal strength reporting (RequestRssi/Rssi messages)
+
+### Fixed
+- Deduplicate known dice by name when device IDs change across reloads
+- Handle unhandled rejection from connectDevice after advertisement
+- Upgrade attest-build-provenance to v4 for Node 24 compatibility
+
+[0.3.0]: https://github.com/scooper4711/pixels-ble/releases/tag/v0.3.0
+
 ## [0.2.1] - 2026-08-12
 
 ### Fixed
