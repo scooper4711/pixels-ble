@@ -17,6 +17,82 @@ Releases are automated via a release script and GitHub Actions:
 - Push access to the `main` branch.
 - OIDC trusted publishing configured on npmjs.com for the `@scooper4711/pixels-ble` package (repository: `scooper4711/pixels-ble`, workflow: `release.yml`, environment: `npm`).
 - 2FA enabled on your npmjs.com account (required to approve staged packages).
+- GPG or SSH signing configured locally for signed tags (`git config tag.gpgsign true`).
+
+## Initial Setup
+
+These are one-time configuration steps for the repository and npm package. They harden the release pipeline against supply-chain attacks.
+
+### GitHub Repository Settings
+
+Configure at: `https://github.com/scooper4711/pixels-ble/settings`
+
+**Branch protection for `main`:**
+- Settings → Branches → Add rule for `main`
+- Require signed commits
+- Require status checks to pass before merging (select `lint-test-build` and `sonar`)
+- Require linear history
+- Do not allow force pushes
+- Do not allow deletions
+
+**Tag protection:**
+- Settings → Tags → Add rule: `v*`
+- Prevents deletion or overwriting of version tags
+
+**Rulesets (optional, more granular alternative):**
+- Settings → Rules → Rulesets → New ruleset
+- Target: tags matching `v*`
+- Rules: require signed tags, block deletions, block force pushes
+
+### GitHub Environment
+
+- Settings → Environments → Create `npm`
+- Add deployment protection rule: require reviewers (optional extra gate)
+- No secrets needed (OIDC handles authentication)
+
+### npm Package Settings
+
+Configure at: `https://www.npmjs.com/package/@scooper4711/pixels-ble/access`
+
+**Trusted publisher:**
+- Repository owner: `scooper4711`
+- Repository name: `pixels-ble`
+- Workflow filename: `release.yml`
+- Environment: `npm`
+
+**Restrict publishing method:**
+- Disable token-based publishing entirely — only OIDC (trusted publisher) can stage packages
+- This ensures even a leaked token cannot publish
+
+**Staged publishing:**
+- Enabled by default when using `npm stage publish`
+- All versions require 2FA approval before becoming installable
+
+### Local Signing
+
+Ensure your local git is configured for signed commits and tags:
+
+```bash
+git config commit.gpgsign true
+git config tag.gpgsign true
+```
+
+The release script uses `git tag -s` to create signed tags. Consumers can verify tag authenticity with `git verify-tag v0.1.2`.
+
+### Verifying the Supply Chain
+
+Consumers can verify the package at multiple levels:
+
+```bash
+# Verify npm provenance
+npm audit signatures
+
+# Verify GitHub artifact attestation
+gh attestation verify $(npm pack @scooper4711/pixels-ble) --owner scooper4711
+
+# Verify git tag signature
+git verify-tag v0.1.2
+```
 
 ## Step-by-Step
 
@@ -35,7 +111,7 @@ The script will:
 3. Ask for confirmation
 4. Update `CHANGELOG.md` with a generated entry
 5. Commit the changelog
-6. Create an annotated tag
+6. Create a signed, annotated tag
 7. Push main and the tag to origin
 8. Create a draft GitHub Release using the changelog entry
 9. Print the URL to review and publish the draft

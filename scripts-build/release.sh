@@ -205,7 +205,7 @@ git add CHANGELOG.md
 git commit -S -m "docs: Update CHANGELOG for ${NEXT_TAG}"
 
 # Create annotated tag and push
-git tag -a "$NEXT_TAG" -m "Release ${NEXT_TAG}"
+git tag -s "$NEXT_TAG" -m "Release ${NEXT_TAG}"
 git push origin main
 git push origin "$NEXT_TAG"
 
